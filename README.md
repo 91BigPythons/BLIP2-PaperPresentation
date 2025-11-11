@@ -33,8 +33,48 @@ features         │ query tokens  │                      │ or QA     │
                  Frozen image features
 ```
 
-**Key piece: Q‑Former**  
-- Maintains a small, fixed number of trainable **query tokens** (e.g., 32×768).  
+** Method
+- The BLIP-2 framework, short for Bootstrapping Language-Image Pre-training 2, introduces an efficient approach for aligning vision and language without the need for end-to-end training of massive multimodal models. Instead of jointly training an image encoder and a language model from scratch, BLIP-2 leverages two powerful pre-trained unimodal components: a frozen image encoder (such as CLIP ViT-L/14 or EVA-CLIP ViT-g/14) and a frozen large language model (LLM) such as OPT or FlanT5. Between these two frozen modules lies the only trainable component — the Querying Transformer (Q-Former) — which serves as a lightweight bridge that learns how to translate visual representations into language-understandable embeddings.
+
+The training of BLIP-2 proceeds in two stages, each targeting a distinct aspect of cross-modal alignment.
+
+Stage One: Vision–Language Representation Learning.
+In this stage, the model aims to teach Q-Former how to extract the visual information that is most relevant to textual semantics. Given a pair of image and caption, Q-Former interacts with the frozen image encoder through cross-attention layers using a fixed set of learnable query tokens. It is optimized jointly by three complementary objectives:
+(1) Image-Text Contrastive Learning (ITC) to align image and text embeddings in a shared latent space;
+(2) Image-Grounded Text Generation (ITG) to generate captions conditioned on visual features; and
+(3) Image-Text Matching (ITM) to discriminate whether an image–text pair is correctly matched.
+By combining these objectives, Q-Former gradually learns to focus on semantically meaningful regions of the image while filtering out irrelevant visual details.
+
+Stage Two: Vision-to-Language Generative Learning.
+After Q-Former has learned to represent images in a language-related manner, the second stage connects it to a frozen LLM to endow the whole system with natural-language generation ability. The key idea is to project the output of Q-Former — a set of 32 visual query embeddings — into the same dimensional space as the LLM’s word embeddings, and then prepend these visual embeddings to the text input sequence. They act as soft visual prompts that condition the LLM on the image content.
+
+To illustrate, consider an input image showing a cat wearing sunglasses.
+
+The frozen image encoder first extracts dense visual features.
+
+Q-Former compresses these features into 32 informative queries that summarize “what the image is about.”
+
+These queries are linearly mapped to the token space and inserted before the text prompt fed into the LLM, for example:
+“
+𝑣
+𝑖
+𝑠
+𝑢
+𝑎
+𝑙
+𝑝
+𝑟
+𝑜
+𝑚
+𝑝
+𝑡
+𝑠
+visualprompts A cat wearing sunglasses”.
+
+The LLM (e.g., OPT or FlanT5) then generates the natural language output such as “A cat wearing sunglasses sitting on a beach.”
+During training, the system minimizes the standard language-modeling loss so that the generated text aligns with ground-truth captions or answers. In essence, the second stage teaches Q-Former to speak the LLM’s language — to express visual information in a form that the LLM can interpret.
+
+This two-stage strategy offers several advantages. Because both the image encoder and the LLM remain frozen, the pre-training cost is drastically reduced. Moreover, it avoids catastrophic forgetting in the LLM while still achieving strong vision–language alignment. Through this process, BLIP-2 can perform a wide range of zero-shot multimodal tasks — from image captioning and visual question answering to instruction-based image-to-text generation — demonstrating that the lightweight Q-Former is sufficient to bridge the gap between powerful unimodal models.
 - **Cross‑attends** to frozen ViT features to pull out language‑relevant information.  
 - Feeds projected queries as **soft visual prompts** to the frozen LLM.
 
