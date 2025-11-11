@@ -22,15 +22,8 @@ BLIP‑2 makes multimodal training **much cheaper** by keeping the **image encod
 ## Architecture (High‑Level)
 
 ```
-Image            Q‑Former (trainable)                     Frozen LLM
-Encoder          ┌───────────────┐   Linear proj.        ┌───────────┐
-(ViT)  ───────►  │ 32 learned    ├───────────────►       │ Text gen. │
-features         │ query tokens  │                      │ or QA     │
-                 │ (self‑attn)   │                      └───────────┘
-                 │ + cross‑attn  │
-                 └───────────────┘
-                       ▲
-                 Frozen image features
+![BLIP-2 Overview](./images/blip2.png)
+
 ```
 
 ** Method
