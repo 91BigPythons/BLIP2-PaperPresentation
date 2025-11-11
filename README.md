@@ -22,7 +22,7 @@ BLIP‑2 makes multimodal training **much cheaper** by keeping the **image encod
 ## Architecture (High‑Level)
 
 ```
-![BLIP-2 Overview](./blip2.png)
+![BLIP-2 Overview](./images/blip2.png)
 
 ```
 
